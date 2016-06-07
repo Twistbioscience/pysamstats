@@ -698,6 +698,7 @@ dtype_variation = [
     ('mismatches_pp', 'i4'),
     ('deletions', 'i4'),
     ('single_deletions', 'i4'),
+    ('deletions_pp', 'i4'),
     ('insertions', 'i4'),
     ('insertions_pp', 'i4'),
     ('A', 'i4'),
@@ -736,6 +737,7 @@ cpdef dict _rec_variation(AlignmentFile alignmentfile, FastaFile fafile,
     cdef int mismatches_pp = 0
     cdef int deletions = 0
     cdef int single_deletions = 0
+    cdef int deletions_pp = 0
     cdef int insertions = 0
     cdef int insertions_pp = 0
     cdef int a = 0
@@ -779,6 +781,8 @@ cpdef dict _rec_variation(AlignmentFile alignmentfile, FastaFile fafile,
             reads_pp += 1
         if read.is_del:
             deletions += 1
+            if is_proper_pair:
+                deletions_pp += 1
         else:
 #            alnbase = get_seq_range(aln, 0, aln.core.l_qseq)[read.qpos]
             alnbase = _get_seq_base(aln, read.qpos)
@@ -825,6 +829,7 @@ cpdef dict _rec_variation(AlignmentFile alignmentfile, FastaFile fafile,
             'mismatches_pp': mismatches_pp,
             'deletions': deletions,
             'single_deletions': single_deletions,
+            'deletions_pp': deletions_pp,
             'insertions': insertions,
             'insertions_pp': insertions_pp,
             'A': a, 'A_pp': a_pp,
@@ -846,6 +851,7 @@ cpdef dict _rec_variation_pad(FastaFile fafile, chrom, pos,
             'mismatches_pp': 0,
             'deletions': 0,
             'single_deletions': 0,
+            'deletions_pp': 0,
             'insertions': 0,
             'insertions_pp': 0,
             'A': 0, 'A_pp': 0,
@@ -927,6 +933,7 @@ dtype_variation_strand = [
     ('deletions_fwd', 'i4'),
     ('deletions_rev', 'i4'),
     ('single_deletions', 'i4'),
+    ('deletions_pp', 'i4'),
     ('deletions_pp_fwd', 'i4'),
     ('deletions_pp_rev', 'i4'),
     ('insertions', 'i4'),
@@ -1055,7 +1062,7 @@ cpdef dict _rec_variation_strand(AlignmentFile alignmentfile, FastaFile fafile,
             'mismatches': mismatches.all, 'mismatches_fwd': mismatches.fwd, 'mismatches_rev': mismatches.rev,
             'mismatches_pp': mismatches.pp, 'mismatches_pp_fwd': mismatches.pp_fwd, 'mismatches_pp_rev': mismatches.pp_rev,
             'deletions': deletions.all, 'deletions_fwd': deletions.fwd, 'deletions_rev': deletions.rev,
-            'single_deletions': deletions.pp, 'deletions_pp_fwd': deletions.pp_fwd, 'deletions_pp_rev': deletions.pp_rev,
+            'single_deletions': 0, 'deletions_pp': deletions.pp, 'deletions_pp_fwd': deletions.pp_fwd, 'deletions_pp_rev': deletions.pp_rev,
             'insertions': insertions.all, 'insertions_fwd': insertions.fwd, 'insertions_rev': insertions.rev,
             'insertions_pp': insertions.pp, 'insertions_pp_fwd': insertions.pp_fwd, 'insertions_pp_rev': insertions.pp_rev,
             'A': A.all, 'A_fwd': A.fwd, 'A_rev': A.rev, 'A_pp': A.pp, 'A_pp_fwd': A.pp_fwd, 'A_pp_rev': A.pp_rev,
@@ -1078,7 +1085,7 @@ cpdef dict _rec_variation_strand_pad(FastaFile fafile, chrom, pos,
             'mismatches': 0, 'mismatches_fwd': 0, 'mismatches_rev': 0,
             'mismatches_pp': 0, 'mismatches_pp_fwd': 0, 'mismatches_pp_rev': 0,
             'deletions': 0, 'deletions_fwd': 0, 'deletions_rev': 0,
-            'single_deletions': 0, 'deletions_pp_fwd': 0, 'deletions_pp_rev': 0,
+            'single_deletions': 0, 'deletions_pp': 0, 'deletions_pp_fwd': 0, 'deletions_pp_rev': 0,
             'insertions': 0, 'insertions_fwd': 0, 'insertions_rev': 0,
             'insertions_pp': 0, 'insertions_pp_fwd': 0, 'insertions_pp_rev': 0,
             'A': 0, 'A_fwd': 0, 'A_rev': 0,
