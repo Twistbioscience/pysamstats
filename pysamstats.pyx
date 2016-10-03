@@ -717,7 +717,6 @@ dtype_variation = [
 
 fields_variation = [t[0] for t in dtype_variation]
 
-
 cpdef dict _rec_variation(AlignmentFile alignmentfile, FastaFile fafile,
                           PileupColumn col, bint one_based=False):
 
@@ -813,7 +812,7 @@ cpdef dict _rec_variation(AlignmentFile alignmentfile, FastaFile fafile,
             if read.indel == 1 :
                 single_insertions += 1
             if read.indel > 0:
-                insertions += read.indel
+                insertions += 1
                 if is_proper_pair:
                     insertions_pp += 1
             if alnbase == refbase_b:
@@ -833,6 +832,184 @@ cpdef dict _rec_variation(AlignmentFile alignmentfile, FastaFile fafile,
             'mismatches_pp': mismatches_pp,
             'deletions': deletions,
             'single_deletions': single_deletions,
+            'deletions_pp': deletions_pp,
+            'insertions': insertions,
+            'single_insertions': single_insertions,
+            'insertions_pp': insertions_pp,
+            'A': a, 'A_pp': a_pp,
+            'C': c, 'C_pp': c_pp,
+            'T': t, 'T_pp': t_pp,
+            'G': g, 'G_pp': g_pp,
+            'N': n, 'N_pp': n_pp}
+
+
+
+dtype_variation_soft = [
+    ('chrom', 'a12'),
+    ('pos', 'i4'),
+    ('ref', 'a1'),
+    ('reads_all', 'i4'),
+    ('reads_pp', 'i4'),
+    ('matches', 'i4'),
+    ('matches_pp', 'i4'),
+    ('mismatches', 'i4'),
+    ('mismatches_pp', 'i4'),
+    ('deletions', 'i4'),
+    ('single_deletions', 'i4'),
+    ('deletions_pp', 'i4'),
+    ('insertions', 'i4'),
+    ('single_insertions', 'i4'),
+    ('insertions_pp', 'i4'),
+    ('left_soft_clipped', 'i4'),
+    ('right_soft_clipped', 'i4'),
+    ('A', 'i4'),
+    ('A_pp', 'i4'),
+    ('C', 'i4'),
+    ('C_pp', 'i4'),
+    ('T', 'i4'),
+    ('T_pp', 'i4'),
+    ('G', 'i4'),
+    ('G_pp', 'i4'),
+    ('N', 'i4'),
+    ('N_pp', 'i4')
+]
+
+
+fields_variation_soft = [t[0] for t in dtype_variation_soft]
+
+cpdef dict _rec_variation_soft(AlignmentFile alignmentfile, FastaFile fafile,
+                          PileupColumn col, bint one_based=False):
+
+    # statically typed variables
+    cdef bam_pileup1_t ** plp
+    cdef bam_pileup1_t * read
+    cdef bam1_t * aln
+    cdef int i  # loop index
+    cdef int reads_all  # total number of reads in column
+    cdef uint32_t flag
+    cdef bint is_proper_pair
+    cdef bytes alnbase, refbase_b
+    # counting variables
+    cdef int reads_pp = 0
+    cdef int matches = 0
+    cdef int matches_pp = 0
+    cdef int mismatches = 0
+    cdef int mismatches_pp = 0
+    cdef int deletions = 0
+    cdef int single_deletions = 0
+    cdef int left_soft_clipped = 0
+    cdef int right_soft_clipped = 0
+    cdef int deletions_pp = 0
+    cdef int insertions = 0
+    cdef int single_insertions = 0
+    cdef int insertions_pp = 0
+    cdef int a = 0
+    cdef int a_pp = 0
+    cdef int c = 0
+    cdef int c_pp = 0
+    cdef int t = 0
+    cdef int t_pp = 0
+    cdef int g = 0
+    cdef int g_pp = 0
+    cdef int n = 0
+    cdef int n_pp = 0
+
+    # initialise variables
+    reads_all = col.n
+    plp = col.plp
+
+    # get chromosome name and position
+    chrom = alignmentfile.getrname(col.tid)
+    pos = col.pos + 1 if one_based else col.pos
+
+    #test
+    iter = alignmentfile.fetch(reference=chrom, start=col.pos, end=col.pos+1)
+    for x in iter:
+      if x.reference_start == col.pos :
+        if x.query_alignment_start > 0 :
+          left_soft_clipped += 1
+      if x.reference_end == col.pos + 1:
+        if x.query_length >  x.reference_length + x.query_alignment_start:
+            right_soft_clipped += 1
+      #print (x.reference_start)
+      #print (x.reference_end)
+      #print (x.query_alignment_start)
+      #print (x.query_length)
+
+    # reference base
+    refbase = fafile\
+        .fetch(reference=chrom, start=col.pos, end=col.pos+1)\
+        .upper()
+    if not PY2:
+        refbase_b = refbase.encode('ascii')
+    else:
+        refbase_b = refbase
+
+    # loop over reads, extract what we need
+    for i in range(reads_all):
+        read = &(plp[0][i])
+        # read.qpos
+        # read.is_del
+        # read.indel
+        aln = read.b
+        flag = aln.core.flag
+        is_proper_pair = <bint>(flag & BAM_FPROPER_PAIR)
+        if is_proper_pair:
+            reads_pp += 1
+        if read.is_del:
+            deletions += 1
+            if is_proper_pair:
+                deletions_pp += 1
+        else:
+#            alnbase = get_seq_range(aln, 0, aln.core.l_qseq)[read.qpos]
+            alnbase = _get_seq_base(aln, read.qpos)
+            if alnbase == b'A':
+                a += 1
+                if is_proper_pair:
+                    a_pp += 1
+            elif alnbase == b'T':
+                t += 1
+                if is_proper_pair:
+                    t_pp += 1
+            elif alnbase == b'C':
+                c += 1
+                if is_proper_pair:
+                    c_pp += 1
+            elif alnbase == b'G':
+                g += 1
+                if is_proper_pair:
+                    g_pp += 1
+            elif alnbase == b'N':
+                n += 1
+                if is_proper_pair:
+                    n_pp += 1
+            if read.indel == -1 :
+                single_deletions += 1
+            if read.indel == 1 :
+                single_insertions += 1
+            if read.indel > 0:
+                insertions += 1
+                if is_proper_pair:
+                    insertions_pp += 1
+            if alnbase == refbase_b:
+                matches += 1
+                if is_proper_pair:
+                    matches_pp += 1
+            else:
+                mismatches += 1
+                if is_proper_pair:
+                    mismatches_pp += 1
+
+    return {'chrom': chrom, 'pos': pos, 'ref': refbase,
+            'reads_all': reads_all, 'reads_pp': reads_pp,
+            'matches': matches,
+            'matches_pp': matches_pp,
+            'mismatches': mismatches,
+            'mismatches_pp': mismatches_pp,
+            'deletions': deletions,
+            'single_deletions': single_deletions,
+            'left_soft_clipped': left_soft_clipped,
+            'right_soft_clipped': right_soft_clipped,
             'deletions_pp': deletions_pp,
             'insertions': insertions,
             'single_insertions': single_insertions,
@@ -865,6 +1042,42 @@ cpdef dict _rec_variation_pad(FastaFile fafile, chrom, pos,
             'T': 0, 'T_pp': 0,
             'G': 0, 'G_pp': 0,
             'N': 0, 'N_pp': 0}
+
+def stat_variation_soft(alignmentfile, fafile, **kwargs):
+    """Generate variation statistics per genome position.
+
+    Parameters
+    ----------
+
+    alignmentfile : pysam.AlignmentFile or string
+        SAM or BAM file or file path
+    fafile : pysam.FastaFile or string
+        FASTA file or file path
+    chrom : string
+        chromosome/contig
+    start : int
+        start position
+    end : int
+        end position
+    one_based : bool
+        coordinate system
+    truncate : bool
+        if True, truncate output to selected region
+    pad : bool
+        if True, emit records for every position, even if no reads are aligned
+    max_depth : int
+        maximum depth to allow in pileup column
+
+    Returns
+    -------
+
+    recs : iterator
+        record generator
+
+    """
+
+    return _iter_pileup(_rec_variation_soft, _rec_variation_pad,
+                        alignmentfile, fafile=fafile, **kwargs)
 
 
 def stat_variation(alignmentfile, fafile, **kwargs):
@@ -907,6 +1120,9 @@ def stat_variation(alignmentfile, fafile, **kwargs):
 def load_variation(*args, **kwargs):
     return _load_stats(stat_variation, dtype_variation, *args, **kwargs)
 
+def load_variation_soft(*args, **kwargs):
+    return _load_stats(stat_variation_soft, dtype_variation_soft, *args, **kwargs)
+
 
 #################################
 # STRANDED VARIATION STATISTICS #
@@ -939,6 +1155,8 @@ dtype_variation_strand = [
     ('deletions_fwd', 'i4'),
     ('deletions_rev', 'i4'),
     ('single_deletions', 'i4'),
+    ('left_soft_clipped', 'i4'),
+    ('right_soft_clipped', 'i4'),
     ('deletions_pp', 'i4'),
     ('deletions_pp_fwd', 'i4'),
     ('deletions_pp_rev', 'i4'),
@@ -1069,6 +1287,7 @@ cpdef dict _rec_variation_strand(AlignmentFile alignmentfile, FastaFile fafile,
             'mismatches': mismatches.all, 'mismatches_fwd': mismatches.fwd, 'mismatches_rev': mismatches.rev,
             'mismatches_pp': mismatches.pp, 'mismatches_pp_fwd': mismatches.pp_fwd, 'mismatches_pp_rev': mismatches.pp_rev,
             'deletions': deletions.all, 'deletions_fwd': deletions.fwd, 'deletions_rev': deletions.rev,
+            'left_soft_clipped': 0, 'right_soft_clipped': 0,
             'single_deletions': 0, 'deletions_pp': deletions.pp, 'deletions_pp_fwd': deletions.pp_fwd, 'deletions_pp_rev': deletions.pp_rev,
             'single_insertions': 0, 'insertions': insertions.all, 'insertions_fwd': insertions.fwd, 'insertions_rev': insertions.rev,
             'insertions_pp': insertions.pp, 'insertions_pp_fwd': insertions.pp_fwd, 'insertions_pp_rev': insertions.pp_rev,
@@ -3684,7 +3903,7 @@ def _iter_pileup_default(frec, alignmentfile, fafile=None,
                          max_depth=8000, **kwargs):
     start, end = _normalise_coords(alignmentfile, chrom, start, end, one_based)
     it = alignmentfile.pileup(reference=chrom, start=start, end=end,
-                        truncate=truncate, max_depth=max_depth)
+                        truncate=truncate, max_depth=max_depth, stepper='nofilter')
     for col in it:
         yield frec(alignmentfile, fafile, col, one_based)
 
@@ -3722,7 +3941,7 @@ def _iter_pileup_padded_chrom(frec, fpad, alignmentfile, fafile, chrom, start=No
     assert chrom is not None, 'chromosome is None'
     start, end = _normalise_coords(alignmentfile, chrom, start, end, one_based)
     it = alignmentfile.pileup(reference=chrom, start=start, end=end,
-                        truncate=truncate, max_depth=max_depth)
+                        truncate=truncate, max_depth=max_depth, stepper='nofilter')
     curpos = start
     for col in it:
         while curpos < col.pos:

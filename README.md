@@ -11,7 +11,7 @@ based on sequence alignments from a SAM or BAM file.
 Installation
 ------------
 
-Building pysamstats depends on 
+Building pysamstats depends on
 [pysam version 0.8.4](http://pysam.readthedocs.org/en/latest/).
 Please **install pysam first**, before attempting to install
 pysamstats, e.g.:
@@ -102,7 +102,7 @@ Pileup-based statistics types (each row has statistics over reads in a pileup co
                             (total and properly paired).
     * coverage_strand     - As coverage but with forward/reverse strand counts.
     * coverage_ext        - Various additional coverage metrics, including
-                            coverage for reads not properly paired (mate 
+                            coverage for reads not properly paired (mate
                             unmapped, mate on other chromosome, ...).
     * coverage_ext_strand - As coverage_ext but with forward/reverse strand counts.
     * coverage_gc         - As coverage but also includes a column for %GC.
@@ -178,7 +178,7 @@ reads mapped to the reverse strand. E.g., **reads_fwd** means the
 number of reads mapped to the forward strand.
 
 The suffix **_pp** means the field is restricted to reads flagged as
-properly paired. 
+properly paired.
 
 * **chrom** - Chromosome name.  
 
@@ -258,3 +258,9 @@ properly paired.
 * **rms_baseq_mismatches** - Root-mean-square value of base qualities
     for bases aligned at this position where the base does not match
     the reference.
+
+* **left_soft_clipped** - Number of reads where the aligned base is the first
+    one of the alignment (and the beginning of the read is soft-clipped)
+
+* **right_soft_clipped** - Number of reads where the aligned base is the last
+    one of the alignment (and the end of the read is soft-clipped)

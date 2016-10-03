@@ -11,7 +11,7 @@ import pysamstats
 
 
 if __name__ == '__main__':
-    
+
     stats_types_noref = ('coverage',
                          'coverage_strand',
                          'coverage_ext',
@@ -27,6 +27,7 @@ if __name__ == '__main__':
                          'tlen_binned')
 
     stats_types_withref = ('variation',
+                           'variation_soft',
                            'variation_strand',
                            'baseq_ext',
                            'baseq_ext_strand',
@@ -47,12 +48,13 @@ Pileup-based statistics types (each row has statistics over reads in a pileup co
                             (total and properly paired).
     * coverage_strand     - As coverage but with forward/reverse strand counts.
     * coverage_ext        - Various additional coverage metrics, including
-                            coverage for reads not properly paired (mate 
+                            coverage for reads not properly paired (mate
                             unmapped, mate on other chromosome, ...).
     * coverage_ext_strand - As coverage_ext but with forward/reverse strand counts.
     * coverage_gc         - As coverage but also includes a column for %GC.
     * variation           - Numbers of matches, mismatches, deletions,
                             insertions, etc.
+    * variation_soft      - As variation but with soft_clipping count (much slower !)
     * variation_strand    - As variation but with forward/reverse strand counts.
     * tlen                - Insert size statistics.
     * tlen_strand         - As tlen but with statistics by forward/reverse strand.
@@ -172,11 +174,11 @@ Version: {version} (pysam {pysamversion})
                            '2**20).')
 
     options, args = parser.parse_args()
-    
+
     if len(args) != 1:
         parser.error('missing SAM or BAM file operand\n\nTry "pysamstats '
                      '--help" for more information.')
-    
+
     samfile = args[0]
     one_based = not options.zero_based
     write_header = not options.omit_header
@@ -184,7 +186,7 @@ Version: {version} (pysam {pysamversion})
         fields = options.fields.split(',')
     else:
         fields = None
-    
+
     try:
 
         if options.type not in stats_types:
