@@ -28,6 +28,7 @@ if __name__ == '__main__':
 
     stats_types_withref = ('variation',
                            'variation_soft',
+                           'variation_soft_no_hard',
                            'variation_strand',
                            'baseq_ext',
                            'baseq_ext_strand',
